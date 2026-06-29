@@ -1,0 +1,2306 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TARA Mosque — Admin Dashboard</title>
+
+    <!-- Tailwind CSS via CDN -->
+    <script src="https://cdn.tailwindcss.com">
+    </script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    <!-- Google Fonts: Inter + Cairo -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&family=Cairo:wght@400;600;700&display=swap" rel="stylesheet" />
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js">
+    </script>
+    <!-- QRCode.js -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js">
+    </script>
+
+    <style>
+        /* ─── CSS Variables (Light) ─── */
+        :root {
+            --primary: #1A5B3A;
+            --primary-light: #2E7D52;
+            --gold: #D4AF37;
+            --gold-light: #E8C84A;
+            --cream: #F5F0E1;
+            --cream-dark: #EDE7D9;
+            --navy: #1A2342;
+            --text-dark: #1E1E1E;
+            --text-light: #F8F6F0;
+            --bg-body: #F8F6F0;
+            --bg-card: #FFFFFF;
+            --shadow: 0 8px 32px rgba(26, 35, 66, 0.08);
+            --shadow-hover: 0 12px 48px rgba(26, 35, 66, 0.14);
+            --radius: 16px;
+            --sidebar-width: 260px;
+            --sidebar-collapsed: 72px;
+            --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            --font-arabic: 'Cairo', 'Noto Sans Arabic', sans-serif;
+        }
+
+        /* ─── Dark Theme ─── */
+        [data-theme="dark"] {
+            --bg-body: #0F1419;
+            --bg-card: #1A2342;
+            --text-dark: #EDE7D9;
+            --text-light: #EDE7D9;
+            --cream: #1A2342;
+            --cream-dark: #0F1419;
+            --shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            --shadow-hover: 0 12px 48px rgba(0, 0, 0, 0.6);
+        }
+
+        /* ─── Reset & Base ─── */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            background: var(--bg-body);
+            color: var(--text-dark);
+            transition: background var(--transition), color var(--transition);
+            overflow-x: hidden;
+        }
+
+        /* ─── Scrollbar ─── */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--gold);
+            border-radius: 8px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--gold-light);
+        }
+
+        /* ─── Arabic Calligraphy ─── */
+        .bismillah {
+            font-family: var(--font-arabic);
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--gold);
+            letter-spacing: 2px;
+            line-height: 1.6;
+        }
+
+        /* ─── Sidebar ─── */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: var(--bg-card);
+            border-right: 1px solid rgba(212, 175, 55, 0.15);
+            box-shadow: 4px 0 24px rgba(0, 0, 0, 0.04);
+            transition: width var(--transition), transform var(--transition);
+            z-index: 1000;
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding: 0 12px 20px;
+            display: flex;
+            flex-direction: column;
+        }
+        .sidebar.collapsed {
+            width: var(--sidebar-collapsed);
+        }
+        .sidebar.collapsed .sidebar-label,
+        .sidebar.collapsed .sidebar-sub {
+            display: none;
+        }
+        .sidebar.collapsed .sidebar-icon {
+            margin-right: 0;
+        }
+        .sidebar.collapsed .sidebar-logo-text {
+            display: none;
+        }
+        .sidebar.collapsed .sidebar-toggle-btn {
+            transform: rotate(180deg);
+        }
+
+        .sidebar-logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 20px 8px 16px;
+            border-bottom: 1px solid rgba(212, 175, 55, 0.15);
+            margin-bottom: 16px;
+            flex-shrink: 0;
+        }
+        .sidebar-logo-icon {
+            width: 42px;
+            height: 42px;
+            background: linear-gradient(135deg, var(--primary), var(--gold));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+        .sidebar-logo-text {
+            font-weight: 700;
+            font-size: 1.15rem;
+            color: var(--text-dark);
+            white-space: nowrap;
+        }
+        .sidebar-logo-text span {
+            color: var(--gold);
+        }
+
+        .sidebar-nav {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            padding-bottom: 12px;
+        }
+        .sidebar-nav-item {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 10px 14px;
+            border-radius: 12px;
+            color: var(--text-dark);
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all var(--transition);
+            cursor: pointer;
+            position: relative;
+            white-space: nowrap;
+        }
+        .sidebar-nav-item:hover {
+            background: rgba(26, 91, 58, 0.08);
+            color: var(--primary);
+        }
+        .sidebar-nav-item.active {
+            background: linear-gradient(135deg, rgba(26, 91, 58, 0.12), rgba(212, 175, 55, 0.10));
+            color: var(--primary);
+            font-weight: 600;
+        }
+        .sidebar-nav-item.active::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 4px;
+            height: 28px;
+            background: var(--gold);
+            border-radius: 0 4px 4px 0;
+        }
+        .sidebar-icon {
+            width: 22px;
+            text-align: center;
+            font-size: 1.05rem;
+            flex-shrink: 0;
+            color: inherit;
+        }
+        .sidebar-label {
+            flex: 1;
+        }
+        .sidebar-badge {
+            background: var(--gold);
+            color: #fff;
+            font-size: 0.65rem;
+            padding: 2px 10px;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+
+        .sidebar-toggle-btn {
+            margin-top: auto;
+            padding: 10px 14px;
+            border-radius: 12px;
+            border: none;
+            background: rgba(212, 175, 55, 0.10);
+            color: var(--text-dark);
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            width: 100%;
+        }
+        .sidebar-toggle-btn:hover {
+            background: rgba(212, 175, 55, 0.20);
+        }
+
+        /* ─── Main Content ─── */
+        .main-wrapper {
+            margin-left: var(--sidebar-width);
+            transition: margin var(--transition);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .sidebar.collapsed~.main-wrapper {
+            margin-left: var(--sidebar-collapsed);
+        }
+
+        /* ─── Top Nav ─── */
+        .topnav {
+            background: var(--bg-card);
+            padding: 12px 28px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid rgba(212, 175, 55, 0.10);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(12px);
+            background: rgba(255, 255, 255, 0.85);
+            transition: background var(--transition);
+        }
+        [data-theme="dark"] .topnav {
+            background: rgba(26, 35, 66, 0.90);
+        }
+        .topnav-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        .topnav-left h1 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+        .topnav-left h1 span {
+            color: var(--gold);
+        }
+        .topnav-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .topnav-btn {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            border: none;
+            background: transparent;
+            color: var(--text-dark);
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+        .topnav-btn:hover {
+            background: rgba(212, 175, 55, 0.12);
+        }
+        .topnav-btn .badge {
+            position: absolute;
+            top: -2px;
+            right: -2px;
+            width: 18px;
+            height: 18px;
+            background: #E74C3C;
+            color: #fff;
+            font-size: 0.55rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+        }
+        .topnav-profile {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding-left: 12px;
+            border-left: 1px solid rgba(212, 175, 55, 0.15);
+        }
+        .topnav-profile img {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid var(--gold);
+        }
+        .topnav-profile-name {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+        .topnav-profile-role {
+            font-size: 0.7rem;
+            color: var(--gold);
+            font-weight: 500;
+        }
+
+        /* ─── Content Area ─── */
+        .content-area {
+            flex: 1;
+            padding: 28px 32px 16px;
+            max-width: 1440px;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        /* ─── Cards ─── */
+        .card {
+            background: var(--bg-card);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 22px 24px;
+            transition: all var(--transition);
+            border: 1px solid rgba(212, 175, 55, 0.06);
+        }
+        .card:hover {
+            box-shadow: var(--shadow-hover);
+        }
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+        .card-header h3 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+        .card-header .sub {
+            font-size: 0.8rem;
+            color: #888;
+        }
+
+        /* ─── Stats Grid ─── */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 18px;
+            margin-bottom: 28px;
+        }
+        .stat-card {
+            background: var(--bg-card);
+            border-radius: var(--radius);
+            padding: 20px 22px;
+            box-shadow: var(--shadow);
+            border-left: 4px solid var(--gold);
+            transition: all var(--transition);
+        }
+        .stat-card:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-hover);
+        }
+        .stat-card .stat-icon {
+            font-size: 1.6rem;
+            color: var(--gold);
+            margin-bottom: 4px;
+        }
+        .stat-card .stat-value {
+            font-size: 1.65rem;
+            font-weight: 700;
+            color: var(--text-dark);
+        }
+        .stat-card .stat-label {
+            font-size: 0.8rem;
+            color: #888;
+            font-weight: 500;
+        }
+        .stat-card .stat-change {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #2ECC71;
+            margin-top: 4px;
+        }
+
+        /* ─── Prayer Widget ─── */
+        .prayer-widget {
+            background: linear-gradient(135deg, var(--primary), var(--navy));
+            border-radius: var(--radius);
+            padding: 20px 24px;
+            color: #fff;
+            box-shadow: var(--shadow);
+            position: relative;
+            overflow: hidden;
+        }
+        .prayer-widget::after {
+            content: '☪';
+            position: absolute;
+            right: -10px;
+            bottom: -20px;
+            font-size: 8rem;
+            opacity: 0.06;
+        }
+        .prayer-widget .prayer-title {
+            font-size: 0.85rem;
+            opacity: 0.8;
+            font-weight: 500;
+        }
+        .prayer-widget .prayer-time {
+            font-size: 2rem;
+            font-weight: 700;
+            font-family: var(--font-arabic);
+        }
+        .prayer-widget .prayer-next {
+            font-size: 0.8rem;
+            opacity: 0.7;
+            margin-top: 4px;
+        }
+        .prayer-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+            margin-top: 14px;
+        }
+        .prayer-grid .p-item {
+            text-align: center;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
+            padding: 8px 4px;
+            font-size: 0.75rem;
+            transition: all var(--transition);
+        }
+        .prayer-grid .p-item.active {
+            background: var(--gold);
+            color: var(--navy);
+            font-weight: 700;
+        }
+        .prayer-grid .p-item .p-name {
+            font-weight: 600;
+            font-family: var(--font-arabic);
+        }
+        .prayer-grid .p-item .p-time {
+            font-size: 0.7rem;
+            opacity: 0.8;
+        }
+
+        /* ─── Quick Actions ─── */
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 12px;
+        }
+        .quick-action-btn {
+            background: var(--bg-card);
+            border: 1px solid rgba(212, 175, 55, 0.12);
+            border-radius: 12px;
+            padding: 16px 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all var(--transition);
+            color: var(--text-dark);
+            text-decoration: none;
+        }
+        .quick-action-btn:hover {
+            border-color: var(--gold);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow);
+        }
+        .quick-action-btn .qa-icon {
+            font-size: 1.5rem;
+            color: var(--gold);
+            margin-bottom: 6px;
+        }
+        .quick-action-btn .qa-label {
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        /* ─── Mosque Details Form ─── */
+        .form-group {
+            margin-bottom: 18px;
+        }
+        .form-group label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 4px;
+        }
+        .form-group .form-control {
+            width: 100%;
+            padding: 10px 14px;
+            border-radius: 10px;
+            border: 1px solid rgba(212, 175, 55, 0.15);
+            background: var(--bg-body);
+            color: var(--text-dark);
+            font-size: 0.9rem;
+            transition: all var(--transition);
+            font-family: var(--font-sans);
+        }
+        .form-group .form-control:focus {
+            outline: none;
+            border-color: var(--gold);
+            box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.15);
+        }
+        .form-group .form-control::placeholder {
+            color: #aaa;
+        }
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+        @media (max-width: 600px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* ─── Payments Table ─── */
+        .table-wrap {
+            overflow-x: auto;
+            margin-top: 12px;
+        }
+        .table-wrap table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+        .table-wrap table th {
+            text-align: left;
+            padding: 12px 10px;
+            font-weight: 600;
+            color: #888;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid rgba(212, 175, 55, 0.10);
+        }
+        .table-wrap table td {
+            padding: 12px 10px;
+            border-bottom: 1px solid rgba(212, 175, 55, 0.06);
+            color: var(--text-dark);
+        }
+        .table-wrap table tr:hover td {
+            background: rgba(212, 175, 55, 0.04);
+        }
+        .status-badge {
+            padding: 3px 12px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            display: inline-block;
+        }
+        .status-badge.completed {
+            background: #D4EDDA;
+            color: #155724;
+        }
+        .status-badge.pending {
+            background: #FFF3CD;
+            color: #856404;
+        }
+        .status-badge.failed {
+            background: #F8D7DA;
+            color: #721C24;
+        }
+        [data-theme="dark"] .status-badge.completed {
+            background: #1A4A2A;
+            color: #A3D9A5;
+        }
+        [data-theme="dark"] .status-badge.pending {
+            background: #4A3A1A;
+            color: #E8C84A;
+        }
+        [data-theme="dark"] .status-badge.failed {
+            background: #4A1A1A;
+            color: #E87474;
+        }
+
+        .filter-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        .filter-bar .filter-input {
+            padding: 8px 14px;
+            border-radius: 10px;
+            border: 1px solid rgba(212, 175, 55, 0.12);
+            background: var(--bg-body);
+            color: var(--text-dark);
+            font-size: 0.85rem;
+            min-width: 140px;
+            flex: 1;
+        }
+        .filter-bar .filter-input:focus {
+            outline: none;
+            border-color: var(--gold);
+        }
+        .filter-bar .filter-btn {
+            padding: 8px 18px;
+            border-radius: 10px;
+            border: none;
+            background: var(--primary);
+            color: #fff;
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all var(--transition);
+        }
+        .filter-bar .filter-btn:hover {
+            background: var(--primary-light);
+        }
+        .filter-bar .filter-btn.gold {
+            background: var(--gold);
+            color: var(--navy);
+        }
+        .filter-bar .filter-btn.gold:hover {
+            background: var(--gold-light);
+        }
+
+        /* ─── QR Code ─── */
+        .qr-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 28px;
+            align-items: center;
+            background: var(--bg-card);
+            border-radius: var(--radius);
+            padding: 24px 28px;
+            box-shadow: var(--shadow);
+            border: 1px solid rgba(212, 175, 55, 0.08);
+            margin-bottom: 24px;
+        }
+        .qr-box {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+        }
+        .qr-box #qrcode {
+            padding: 12px;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+        }
+        .qr-box #qrcode img {
+            display: block;
+        }
+        .qr-details {
+            flex: 1;
+        }
+        .qr-details h4 {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 4px;
+        }
+        .qr-details .qr-label {
+            font-size: 0.8rem;
+            color: #888;
+            font-weight: 500;
+        }
+        .qr-details .qr-value {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 8px;
+            font-family: var(--font-sans);
+            word-break: break-all;
+        }
+        .qr-details .qr-value .highlight {
+            color: var(--gold);
+        }
+        .qr-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 8px;
+            flex-wrap: wrap;
+        }
+        .qr-actions .btn {
+            padding: 8px 20px;
+            border-radius: 10px;
+            border: none;
+            font-weight: 600;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .qr-actions .btn-primary {
+            background: var(--primary);
+            color: #fff;
+        }
+        .qr-actions .btn-primary:hover {
+            background: var(--primary-light);
+        }
+        .qr-actions .btn-gold {
+            background: var(--gold);
+            color: var(--navy);
+        }
+        .qr-actions .btn-gold:hover {
+            background: var(--gold-light);
+        }
+        .qr-actions .btn-outline {
+            background: transparent;
+            border: 1px solid rgba(212, 175, 55, 0.25);
+            color: var(--text-dark);
+        }
+        .qr-actions .btn-outline:hover {
+            border-color: var(--gold);
+            background: rgba(212, 175, 55, 0.06);
+        }
+
+        /* ─── Pagination ─── */
+        .pagination {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            justify-content: flex-end;
+            margin-top: 16px;
+            flex-wrap: wrap;
+        }
+        .pagination button {
+            padding: 6px 14px;
+            border-radius: 8px;
+            border: 1px solid rgba(212, 175, 55, 0.12);
+            background: var(--bg-card);
+            color: var(--text-dark);
+            cursor: pointer;
+            transition: all var(--transition);
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+        .pagination button:hover {
+            border-color: var(--gold);
+            background: rgba(212, 175, 55, 0.06);
+        }
+        .pagination button.active {
+            background: var(--gold);
+            color: var(--navy);
+            border-color: var(--gold);
+        }
+        .pagination button:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        /* ─── Toast ─── */
+        .toast-container {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-width: 380px;
+            width: 100%;
+        }
+        .toast {
+            background: var(--bg-card);
+            color: var(--text-dark);
+            padding: 14px 20px;
+            border-radius: 12px;
+            box-shadow: var(--shadow-hover);
+            border-left: 4px solid var(--gold);
+            animation: slideUp 0.4s ease;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            backdrop-filter: blur(8px);
+            background: rgba(255, 255, 255, 0.95);
+        }
+        [data-theme="dark"] .toast {
+            background: rgba(26, 35, 66, 0.95);
+        }
+        .toast .toast-icon {
+            font-size: 1.2rem;
+            color: var(--gold);
+        }
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ─── Page Transitions ─── */
+        .page-content {
+            animation: fadeIn 0.35s ease;
+        }
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(12px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ─── Responsive ─── */
+        @media (max-width: 1024px) {
+            .sidebar {
+                transform: translateX(-100%);
+                width: 280px;
+            }
+            .sidebar.open {
+                transform: translateX(0);
+            }
+            .main-wrapper {
+                margin-left: 0 !important;
+            }
+            .topnav-left .menu-toggle {
+                display: flex !important;
+            }
+            .prayer-grid {
+                grid-template-columns: repeat(5, 1fr);
+            }
+        }
+        @media (max-width: 768px) {
+            .content-area {
+                padding: 16px;
+            }
+            .stats-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+            .prayer-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+            .topnav {
+                padding: 10px 16px;
+            }
+            .topnav-profile-name {
+                display: none;
+            }
+            .filter-bar {
+                flex-direction: column;
+            }
+            .filter-bar .filter-input {
+                min-width: 100%;
+            }
+            .qr-container {
+                flex-direction: column;
+                align-items: center;
+                text-align: center;
+            }
+            .qr-details {
+                width: 100%;
+            }
+            .qr-actions {
+                justify-content: center;
+            }
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+        @media (max-width: 480px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            .prayer-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+            .topnav-right .topnav-btn {
+                width: 32px;
+                height: 32px;
+                font-size: 0.9rem;
+            }
+            .topnav-profile {
+                padding-left: 6px;
+            }
+            .topnav-profile img {
+                width: 30px;
+                height: 30px;
+            }
+        }
+
+        /* ─── Utilities ─── */
+        .menu-toggle {
+            display: none !important;
+            background: transparent;
+            border: none;
+            font-size: 1.3rem;
+            color: var(--text-dark);
+            cursor: pointer;
+        }
+        .bg-geometric {
+            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 5 L35 15 L45 15 L38 23 L42 33 L30 28 L18 33 L22 23 L15 15 L25 15 Z' fill='rgba(212,175,55,0.03)'/%3E%3C/svg%3E");
+            background-repeat: repeat;
+        }
+
+        .gold-text {
+            color: var(--gold);
+        }
+        .gold-border {
+            border-color: var(--gold);
+        }
+        .bg-primary-soft {
+            background: rgba(26, 91, 58, 0.06);
+        }
+        .text-primary-dark {
+            color: var(--primary);
+        }
+
+        /* mobile overlay */
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.35);
+            z-index: 999;
+            backdrop-filter: blur(4px);
+        }
+        .sidebar-overlay.show {
+            display: block;
+        }
+        @media (max-width: 1024px) {
+            .sidebar-overlay.show {
+                display: block;
+            }
+        }
+
+        /* skeleton */
+        .skeleton {
+            background: linear-gradient(90deg, var(--bg-body) 25%, rgba(212, 175, 55, 0.06) 50%, var(--bg-body) 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+            border-radius: 8px;
+        }
+        @keyframes shimmer {
+            0% {
+                background-position: -200% 0;
+            }
+            100% {
+                background-position: 200% 0;
+            }
+        }
+
+        /* chart container */
+        .chart-container {
+            position: relative;
+            height: 220px;
+            width: 100%;
+        }
+
+        /* mosque detail image placeholder */
+        .mosque-img-placeholder {
+            width: 100%;
+            height: 160px;
+            background: linear-gradient(135deg, var(--primary), var(--navy));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 3rem;
+            opacity: 0.8;
+            position: relative;
+            overflow: hidden;
+        }
+        .mosque-img-placeholder::after {
+            content: '🕌';
+            font-size: 5rem;
+            opacity: 0.15;
+            position: absolute;
+        }
+
+        /* footer */
+        .app-footer {
+            text-align: center;
+            padding: 16px 0 8px;
+            font-size: 0.8rem;
+            color: #888;
+            border-top: 1px solid rgba(212, 175, 55, 0.06);
+            margin-top: 20px;
+        }
+        .app-footer span {
+            color: var(--gold);
+            font-weight: 600;
+        }
+
+        /* toggle switch */
+        .toggle-switch {
+            position: relative;
+            width: 44px;
+            height: 24px;
+            background: #ccc;
+            border-radius: 14px;
+            cursor: pointer;
+            transition: all var(--transition);
+            flex-shrink: 0;
+        }
+        .toggle-switch.active {
+            background: var(--primary);
+        }
+        .toggle-switch .toggle-knob {
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 20px;
+            height: 20px;
+            background: #fff;
+            border-radius: 50%;
+            transition: all var(--transition);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+        }
+        .toggle-switch.active .toggle-knob {
+            left: 22px;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ─── SIDEBAR OVERLAY (mobile) ─── -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- ─── SIDEBAR ─── -->
+    <aside class="sidebar" id="sidebar">
+        <!-- Logo -->
+        <div class="sidebar-logo">
+            <div class="sidebar-logo-icon"><i class="fas fa-mosque"></i></div>
+            <div class="sidebar-logo-text">TARA<span> Mosque</span></div>
+        </div>
+
+        <!-- Navigation -->
+        <nav class="sidebar-nav">
+            <a class="sidebar-nav-item active" data-page="dashboard" onclick="navigateTo('dashboard')">
+                <span class="sidebar-icon"><i class="fas fa-chart-pie"></i></span>
+                <span class="sidebar-label">Dashboard</span>
+            </a>
+            <a class="sidebar-nav-item" data-page="payments" onclick="navigateTo('payments')">
+                <span class="sidebar-icon"><i class="fas fa-hand-holding-heart"></i></span>
+                <span class="sidebar-label">Donations / Payments</span>
+                <span class="sidebar-badge">12</span>
+            </a>
+            <a class="sidebar-nav-item" data-page="mosque" onclick="navigateTo('mosque')">
+                <span class="sidebar-icon"><i class="fas fa-mosque"></i></span>
+                <span class="sidebar-label">Mosque Details</span>
+            </a>
+            <a class="sidebar-nav-item" data-page="prayers" onclick="navigateTo('prayers')">
+                <span class="sidebar-icon"><i class="fas fa-clock"></i></span>
+                <span class="sidebar-label">Prayer Timings</span>
+            </a>
+            <a class="sidebar-nav-item" data-page="events" onclick="navigateTo('events')">
+                <span class="sidebar-icon"><i class="fas fa-calendar-alt"></i></span>
+                <span class="sidebar-label">Events</span>
+            </a>
+            <a class="sidebar-nav-item" data-page="members" onclick="navigateTo('members')">
+                <span class="sidebar-icon"><i class="fas fa-users"></i></span>
+                <span class="sidebar-label">Members</span>
+            </a>
+            <a class="sidebar-nav-item" data-page="sermons" onclick="navigateTo('sermons')">
+                <span class="sidebar-icon"><i class="fas fa-chalkboard-teacher"></i></span>
+                <span class="sidebar-label">Sermons</span>
+            </a>
+            <a class="sidebar-nav-item" data-page="reports" onclick="navigateTo('reports')">
+                <span class="sidebar-icon"><i class="fas fa-chart-bar"></i></span>
+                <span class="sidebar-label">Reports</span>
+            </a>
+            <a class="sidebar-nav-item" data-page="settings" onclick="navigateTo('settings')">
+                <span class="sidebar-icon"><i class="fas fa-cog"></i></span>
+                <span class="sidebar-label">Settings</span>
+            </a>
+        </nav>
+
+        <!-- Collapse Toggle -->
+        <button class="sidebar-toggle-btn" onclick="toggleSidebar()">
+            <span class="sidebar-icon sidebar-toggle-btn-icon"><i class="fas fa-chevron-left"></i></span>
+            <span class="sidebar-label">Collapse</span>
+        </button>
+    </aside>
+
+    <!-- ─── MAIN WRAPPER ─── -->
+    <div class="main-wrapper" id="mainWrapper">
+
+        <!-- ─── TOP NAV ─── -->
+        <header class="topnav">
+            <div class="topnav-left">
+                <button class="menu-toggle" onclick="toggleMobileSidebar()">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <h1 id="pageTitle">Dashboard <span>·</span> <span id="pageSub">Overview</span></h1>
+            </div>
+            <div class="topnav-right">
+                <!-- Dark/Light Toggle -->
+                <div class="toggle-switch" id="themeToggle" onclick="toggleTheme()">
+                    <div class="toggle-knob"></div>
+                </div>
+                <button class="topnav-btn" title="Notifications">
+                    <i class="fas fa-bell"></i>
+                    <span class="badge">3</span>
+                </button>
+                <button class="topnav-btn" title="Search">
+                    <i class="fas fa-search"></i>
+                </button>
+                <div class="topnav-profile">
+                    <img src="https://ui-avatars.com/api/?name=Admin&background=1A5B3A&color=fff&size=36" alt="Admin" />
+                    <div>
+                        <div class="topnav-profile-name">Admin</div>
+                        <div class="topnav-profile-role">Masjid Admin</div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- ─── CONTENT AREA ─── -->
+        <div class="content-area" id="contentArea">
+
+            <!-- ========== PAGE: DASHBOARD ========== -->
+            <div class="page-content" id="page-dashboard">
+                <!-- Bismillah -->
+                <div class="bismillah text-center mb-6" style="font-size:1.6rem;">
+                    بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ (Bismillah ir-Rahman ir-Rahim)
+                </div>
+
+                <!-- Stats -->
+                <div class="stats-grid" id="statsGrid">
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class="fas fa-hand-holding-ind"></i></div>
+                        <div class="stat-value" id="statDonations">₹0</div>
+                        <div class="stat-label">Total Donations (This Month)</div>
+                        <div class="stat-change"><i class="fas fa-arrow-up"></i> 12.5% from last month</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class="fas fa-user-friends"></i></div>
+                        <div class="stat-value" id="statDonors">0</div>
+                        <div class="stat-label">Donors (This Month)</div>
+                        <div class="stat-change"><i class="fas fa-arrow-up"></i> 8.2% from last month</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class="fas fa-calendar-check"></i></div>
+                        <div class="stat-value" id="statEvents">0</div>
+                        <div class="stat-label">Upcoming Events</div>
+                        <div class="stat-change"><i class="fas fa-arrow-up"></i> 2 new this week</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class="fas fa-users"></i></div>
+                        <div class="stat-value" id="statMembers">0</div>
+                        <div class="stat-label">Total Members</div>
+                        <div class="stat-change"><i class="fas fa-arrow-up"></i> 4.7% growth</div>
+                    </div>
+                </div>
+
+                <!-- Row: Prayer Widget + Quick Actions + Chart -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+                    <!-- Prayer Widget -->
+                    <div class="prayer-widget lg:col-span-1">
+                        <div class="prayer-title"><i class="fas fa-clock mr-1"></i> Prayer Times</div>
+                        <div class="prayer-time" id="currentPrayerTime">--:--</div>
+                        <div class="prayer-next" id="nextPrayerInfo">Next: Fajr in 2h 15m</div>
+                        <div class="prayer-grid" id="prayerGrid">
+                            <div class="p-item active"><div class="p-name">فجر</div><div class="p-time" id="pFajr">5:30</div></div>
+                            <div class="p-item"><div class="p-name">ظهر</div><div class="p-time" id="pDhuhr">12:45</div></div>
+                            <div class="p-item"><div class="p-name">عصر</div><div class="p-time" id="pAsr">16:15</div></div>
+                            <div class="p-item"><div class="p-name">مغرب</div><div class="p-time" id="pMaghrib">18:50</div></div>
+                            <div class="p-item"><div class="p-name">عشاء</div><div class="p-time" id="pIsha">20:30</div></div>
+                        </div>
+                    </div>
+
+                    <!-- Quick Actions -->
+                    <div class="card lg:col-span-1">
+                        <div class="card-header"><h3>⚡ Quick Actions</h3></div>
+                        <div class="quick-actions">
+                            <div class="quick-action-btn" onclick="navigateTo('payments')">
+                                <div class="qa-icon"><i class="fas fa-plus-circle"></i></div>
+                                <div class="qa-label">Add Donation</div>
+                            </div>
+                            <div class="quick-action-btn" onclick="showToast('📊 Report generated!')">
+                                <div class="qa-icon"><i class="fas fa-file-alt"></i></div>
+                                <div class="qa-label">Generate Report</div>
+                            </div>
+                            <div class="quick-action-btn" onclick="showToast('📧 Newsletter sent!')">
+                                <div class="qa-icon"><i class="fas fa-envelope"></i></div>
+                                <div class="qa-label">Send Newsletter</div>
+                            </div>
+                            <div class="quick-action-btn" onclick="showToast('📋 Receipt printed')">
+                                <div class="qa-icon"><i class="fas fa-print"></i></div>
+                                <div class="qa-label">Print Receipt</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Recent Donors -->
+                    <div class="card lg:col-span-1">
+                        <div class="card-header"><h3>🤲 Recent Donors</h3></div>
+                        <div id="recentDonorsList" style="display:flex;flex-direction:column;gap:8px;">
+                            <!-- populated by JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chart -->
+                <div class="card mb-4">
+                    <div class="card-header"><h3>📈 Donation Trends <span class="sub">Last 6 months</span></h3></div>
+                    <div class="chart-container">
+                        <canvas id="donationChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Upcoming Events -->
+                <div class="card">
+                    <div class="card-header"><h3>📅 Upcoming Events</h3></div>
+                    <div id="upcomingEventsList" style="display:flex;flex-direction:column;gap:10px;">
+                        <!-- populated by JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- ========== PAGE: MOSQUE DETAILS ========== -->
+            <div class="page-content hidden" id="page-mosque">
+                <div class="bismillah text-center mb-4" style="font-size:1.3rem;">
+                    🕌 Mosque Details
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="lg:col-span-2">
+                        <div class="card">
+                            <div class="card-header"><h3>📋 Mosque Information</h3></div>
+                            <form id="mosqueForm" onsubmit="saveMosqueDetails(event)">
+                                <div class="form-group">
+                                    <label>Mosque Name</label>
+                                    <input class="form-control" id="mName" value="TARA Mosque" />
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label>Address</label>
+                                        <input class="form-control" id="mAddress" value="Mangapuram colony, Pitapuram Colony" />
+                                    </div>
+                                    <div class="form-group">
+                                        <label>City</label>
+                                        <input class="form-control" id="mCity" value="Visakhapatnam" />
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label>Phone</label>
+                                        <input class="form-control" id="mPhone" value="+91 98 76 543 210" />
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Email</label>
+                                        <input class="form-control" id="mEmail" value="info@Taramosque.org" />
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label>Website</label>
+                                    <input class="form-control" id="mWebsite" value="https://Taramosque.org" />
+                                </div>
+                                <div class="form-group">
+                                    <label>Description / History</label>
+                                    <textarea class="form-control" id="mDesc" rows="3">TARA Mosque has been serving the community since _____, providing spiritual guidance, education, and community services. We are committed to fostering a welcoming environment for all.</textarea>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label>Imam Name</label>
+                                        <input class="form-control" id="mImam" value="Enter Imam Name" />
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Mufti Name</label>
+                                        <input class="form-control" id="mMufti" value="Enter Mufti Name" />
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label>Social Media Links (comma separated)</label>
+                                    <input class="form-control" id="mSocial" value="https://facebook.com/Taramosque, https://instagram.com/Taramosque" />
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label>Opening Hours</label>
+                                        <input class="form-control" id="mHours" value="5:00 AM – 10:00 PM (Daily)" />
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Facilities</label>
+                                        <input class="form-control" id="mFacilities" value="Library, GYM" />
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label>Friday Sermon Schedule</label>
+                                    <input class="form-control" id="mFriday" value="Khutbah: 1:00 PM, Iqamah: 1:30 PM" />
+                                </div>
+                                <button type="submit" class="filter-btn" style="width:100%;padding:12px;">
+                                    <i class="fas fa-save mr-2"></i> Save Mosque Details
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                    <div class="lg:col-span-1">
+                        <div class="card">
+                            <div class="card-header"><h3>🕌 Quick View</h3></div>
+                            <div class="mosque-img-placeholder mb-4"></div>
+                            <div id="mosqueQuickView" style="font-size:0.9rem;line-height:1.8;">
+                                <div><strong>Name:</strong> <span id="qvName">TARA Mosque</span></div>
+                                <div><strong>Location:</strong> <span id="qvLocation">Madinah</span></div>
+                                <div><strong>Imam:</strong> <span id="qvImam">Shaykh Ahmad Al-Rashid</span></div>
+                                <div><strong>Phone:</strong> <span id="qvPhone">+966 55 123 4567</span></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ========== PAGE: PAYMENTS ========== -->
+            <div class="page-content hidden" id="page-payments">
+                <div class="bismillah text-center mb-4" style="font-size:1.3rem;">
+                    💳 Donations & Payments
+                </div>
+
+                <!-- QR Code -->
+                <div class="qr-container" id="qrContainer">
+                    <div class="qr-box">
+                        <div id="qrcode"></div>
+                        <div class="qr-actions">
+                            <button class="btn btn-gold" onclick="downloadQR()"><i class="fas fa-download"></i> Download QR</button>
+                        </div>
+                    </div>
+                    <div class="qr-details">
+                        <h4><i class="fas fa-university gold-text mr-2"></i> Payment Details</h4>
+                        <div class="qr-label">UPI ID</div>
+                        <div class="qr-value"><span class="highlight">Taramosque@upi</span></div>
+                        <div class="qr-label">Bank Account</div>
+                        <div class="qr-value">State Bank of India · <span class="highlight">SBIN 1120 0000 1234 5678 9012</span></div>
+                        <div class="qr-label">Account Holder</div>
+                        <div class="qr-value">TARA Mosque Trust</div>
+                        <div class="qr-label">Amount (optional)</div>
+                        <div style="display:flex;gap:10px;align-items:center;margin-top:4px;">
+                            <input class="form-control" id="qrAmount" placeholder="Enter amount (optional)" style="max-width:200px;" />
+                            <button class="btn btn-primary" onclick="updateQRWithAmount()">Update QR</button>
+                        </div>
+                        <div class="mt-2 text-sm text-gray-400"><i class="fas fa-info-circle"></i> Scan to pay via any UPI app</div>
+                    </div>
+                </div>
+
+                <!-- Filter + Table -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3>📋 Recent Payments</h3>
+                        <div>
+                            <button class="filter-btn gold" onclick="exportCSV()"><i class="fas fa-file-csv mr-1"></i> CSV</button>
+                            <button class="filter-btn gold" onclick="exportPDF()"><i class="fas fa-file-pdf mr-1"></i> PDF</button>
+                        </div>
+                    </div>
+                    <div class="filter-bar">
+                        <input class="filter-input" id="paySearch" placeholder="🔍 Search donor name..." oninput="renderPayments()" />
+                        <select class="filter-input" id="payCategory" onchange="renderPayments()">
+                            <option value="">All Categories</option>
+                            <option value="Zakat">Zakat</option>
+                            <option value="Sadaqah">Sadaqah</option>
+                            <option value="Fitrana">Fitrana</option>
+                            <option value="Construction Fund">Construction Fund</option>
+                            <option value="General Donation">General Donation</option>
+                        </select>
+                        <select class="filter-input" id="payMethod" onchange="renderPayments()">
+                            <option value="">All Methods</option>
+                            <option value="Cash">Cash</option>
+                            <option value="Card">Card</option>
+                            <option value="Bank Transfer">Bank Transfer</option>
+                            <option value="Online">Online</option>
+                        </select>
+                        <input class="filter-input" type="date" id="payDateFrom" onchange="renderPayments()" />
+                        <input class="filter-input" type="date" id="payDateTo" onchange="renderPayments()" />
+                        <button class="filter-btn" onclick="renderPayments()"><i class="fas fa-search mr-1"></i> Filter</button>
+                        <button class="filter-btn gold" onclick="resetFilters()"><i class="fas fa-undo mr-1"></i> Reset</button>
+                    </div>
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Donor</th>
+                                    <th>Amount</th>
+                                    <th>Date & Time</th>
+                                    <th>Method</th>
+                                    <th>Category</th>
+                                    <th>Transaction ID</th>
+                                    <th>Status</th>
+                                    <th>Receipt</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="paymentsBody">
+                                <!-- populated by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="pagination" id="paymentsPagination">
+                        <!-- populated by JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- ========== PAGE: PRAYERS ========== -->
+            <div class="page-content hidden" id="page-prayers">
+                <div class="bismillah text-center mb-4" style="font-size:1.3rem;">
+                    🕌 Prayer Timings
+                </div>
+                <div class="card">
+                    <div class="card-header"><h3>⏰ Update Prayer Times</h3></div>
+                    <form id="prayerForm" onsubmit="savePrayerTimes(event)">
+                        <div class="form-row">
+                            <div class="form-group"><label>Fajr</label><input class="form-control" id="pFajrInput" value="5:30" /></div>
+                            <div class="form-group"><label>Dhuhr</label><input class="form-control" id="pDhuhrInput" value="01:00" /></div>
+                            <div class="form-group"><label>Asr</label><input class="form-control" id="pAsrInput" value="16:15" /></div>
+                            <div class="form-group"><label>Maghrib</label><input class="form-control" id="pMaghribInput" value="18:50" /></div>
+                            <div class="form-group"><label>Isha</label><input class="form-control" id="pIshaInput" value="20:30" /></div>
+                            <!-- <div class="form-group"><label>Zuma</label><input class="form-control" id="pIshaInput" value="12:30" /></div> -->
+
+                        </div>
+                        <button type="submit" class="filter-btn" style="padding:12px 32px;"><i class="fas fa-save mr-2"></i> Save Timings</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- ========== PAGE: EVENTS ========== -->
+            <div class="page-content hidden" id="page-events">
+                <div class="bismillah text-center mb-4" style="font-size:1.3rem;">
+                    📅 Events Management
+                </div>
+                <div class="card">
+                    <div class="card-header"><h3>📋 Upcoming Events</h3></div>
+                    <div id="eventsList" style="display:flex;flex-direction:column;gap:10px;">
+                        <!-- populated by JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- ========== PAGE: MEMBERS ========== -->
+            <div class="page-content hidden" id="page-members">
+                <div class="bismillah text-center mb-4" style="font-size:1.3rem;">
+                    👥 Community Members
+                </div>
+                <div class="card">
+                    <div class="card-header"><h3>📋 Member Directory</h3></div>
+                    <div id="membersList" style="display:flex;flex-direction:column;gap:8px;">
+                        <!-- populated by JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- ========== PAGE: SERMONS ========== -->
+            <div class="page-content hidden" id="page-sermons">
+                <div class="bismillah text-center mb-4" style="font-size:1.3rem;">
+                    🕌 Sermons / Khutbah
+                </div>
+                <div class="card">
+                    <div class="card-header"><h3>📋 Recent Sermons</h3></div>
+                    <div id="sermonsList" style="display:flex;flex-direction:column;gap:8px;">
+                        <!-- populated by JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- ========== PAGE: REPORTS ========== -->
+            <div class="page-content hidden" id="page-reports">
+                <div class="bismillah text-center mb-4" style="font-size:1.3rem;">
+                    📊 Reports & Analytics
+                </div>
+                <div class="card">
+                    <div class="card-header"><h3>📈 Donation Summary</h3></div>
+                    <div class="chart-container" style="height:280px;">
+                        <canvas id="reportChart"></canvas>
+                    </div>
+                    <div class="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                        <div class="p-4 rounded-xl bg-primary-soft"><div class="text-2xl font-bold gold-text">₹12,450</div><div class="text-sm text-gray-500">Total Zakat</div></div>
+                        <div class="p-4 rounded-xl bg-primary-soft"><div class="text-2xl font-bold gold-text">₹6,230</div><div class="text-sm text-gray-500">Sadaqah</div></div>
+                        <div class="p-4 rounded-xl bg-primary-soft"><div class="text-2xl font-bold gold-text">₹3,100</div><div class="text-sm text-gray-500">Fitrana</div></div>
+                        <div class="p-4 rounded-xl bg-primary-soft"><div class="text-2xl font-bold gold-text">₹18,900</div><div class="text-sm text-gray-500">Construction Fund</div></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ========== PAGE: SETTINGS ========== -->
+            <div class="page-content hidden" id="page-settings">
+                <div class="bismillah text-center mb-4" style="font-size:1.3rem;">
+                    ⚙️ Settings
+                </div>
+                <div class="card">
+                    <div class="card-header"><h3>⚙️ General Settings</h3></div>
+                    <div class="flex items-center justify-between py-3 border-b border-gray-100">
+                        <div><strong>Dark Mode</strong><div class="text-sm text-gray-400">Toggle dark/light theme</div></div>
+                        <div class="toggle-switch active" id="settingsThemeToggle" onclick="toggleTheme()"><div class="toggle-knob"></div></div>
+                    </div>
+                    <div class="flex items-center justify-between py-3 border-b border-gray-100">
+                        <div><strong>RTL Support</strong><div class="text-sm text-gray-400">Right-to-Left layout for Arabic</div></div>
+                        <div class="toggle-switch" id="rtlToggle" onclick="toggleRTL()"><div class="toggle-knob"></div></div>
+                    </div>
+                    <div class="flex items-center justify-between py-3">
+                        <div><strong>Notifications</strong><div class="text-sm text-gray-400">Email & SMS alerts</div></div>
+                        <div class="toggle-switch active" id="notifToggle" onclick="toggleNotif()"><div class="toggle-knob"></div></div>
+                    </div>
+                    <div class="mt-4 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl">
+                        <button class="filter-btn" style="background:#E74C3C;" onclick="showToast('⚠️ Settings reset to default')"><i class="fas fa-trash mr-2"></i> Reset All Settings</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="app-footer">
+                Powered by <span>TARA Mosque</span> · <i class="fas fa-mosque"></i> 2026
+            </div>
+        </div>
+    </div>
+
+    <!-- ─── TOAST CONTAINER ─── -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- ─── SCRIPT ─── -->
+    <script>
+        // ============================================================
+        //  DATA
+        // ============================================================
+
+        const prayerData = {
+            Fajr: '5:30',
+            Dhuhr: '12:45',
+            Asr: '16:15',
+            Maghrib: '18:50',
+            Isha: '20:30'
+        };
+
+        const paymentsData = [{
+            id: 1,
+            donor: 'Razak',
+            amount: 1500,
+            date: '2026-06-21T10:30:00',
+            method: 'Bank Transfer',
+            category: 'Zakat',
+            txId: 'TX-2026-001',
+            status: 'Completed',
+            receipt: 'RCP-001'
+        }, {
+            id: 2,
+            donor: 'Babji',
+            amount: 1500,
+            date: '2026-06-20T14:15:00',
+            method: 'Card',
+            category: 'Sadaqah',
+            txId: 'TX-2026-002',
+            status: 'Completed',
+            receipt: 'RCP-002'
+        }, {
+            id: 3,
+            donor: 'Basha',
+            amount: 2500,
+            date: '2026-06-19T09:45:00',
+            method: 'Online',
+            category: 'Construction Fund',
+            txId: 'TX-2026-003',
+            status: 'Pending',
+            receipt: 'RCP-003'
+        }, {
+            id: 4,
+            donor: 'Subhan',
+            amount: 1500,
+            date: '2026-06-18T16:20:00',
+            method: 'Cash',
+            category: 'Fitrana',
+            txId: 'TX-2026-004',
+            status: 'Completed',
+            receipt: 'RCP-004'
+        }, {
+            id: 5,
+            donor: 'Mustafa',
+            amount: 1000,
+            date: '2026-06-17T11:00:00',
+            method: 'Bank Transfer',
+            category: 'General Donation',
+            txId: 'TX-2026-005',
+            status: 'Completed',
+            receipt: 'RCP-005'
+        }, {
+            id: 6,
+            donor: 'Madeena',
+            amount: 750,
+            date: '2026-06-16T13:30:00',
+            method: 'Card',
+            category: 'Zakat',
+            txId: 'TX-2026-006',
+            status: 'Failed',
+            receipt: 'RCP-006'
+        }, {
+            id: 7,
+            donor: 'Goush',
+            amount: 2000,
+            date: '2026-06-15T08:10:00',
+            method: 'Online',
+            category: 'Sadaqah',
+            txId: 'TX-2026-007',
+            status: 'Completed',
+            receipt: 'RCP-007'
+        }, {
+            id: 8,
+            donor: 'Bujji',
+            amount: 1200,
+            date: '2026-06-14T17:40:00',
+            method: 'Cash',
+            category: 'Construction Fund',
+            txId: 'TX-2026-008',
+            status: 'Pending',
+            receipt: 'RCP-008'
+        }, {
+            id: 9,
+            donor: 'Madeena',
+            amount: 1600,
+            date: '2026-06-13T12:20:00',
+            method: 'Bank Transfer',
+            category: 'Fitrana',
+            txId: 'TX-2026-009',
+            status: 'Completed',
+            receipt: 'RCP-009'
+        }, {
+            id: 10,
+            donor: 'Ansar',
+            amount: 1400,
+            date: '2026-06-12T15:50:00',
+            method: 'Card',
+            category: 'General Donation',
+            txId: 'TX-2026-010',
+            status: 'Completed',
+            receipt: 'RCP-010'
+        }, {
+            id: 11,
+            donor: 'Valli',
+            amount: 3000,
+            date: '2026-06-11T10:00:00',
+            method: 'Online',
+            category: 'Zakat',
+            txId: 'TX-2026-011',
+            status: 'Completed',
+            receipt: 'RCP-011'
+        }, {
+            id: 12,
+            donor: 'Baba',
+            amount: 2500,
+            date: '2026-06-10T09:30:00',
+            method: 'Cash',
+            category: 'Sadaqah',
+            txId: 'TX-2026-012',
+            status: 'Completed',
+            receipt: 'RCP-012'
+        }, {
+            id: 13,
+            donor: 'Ibrahim',
+            amount: 1800,
+            date: '2026-06-09T14:00:00',
+            method: 'Bank Transfer',
+            category: 'Construction Fund',
+            txId: 'TX-2026-013',
+            status: 'Pending',
+            receipt: 'RCP-013'
+        }, {
+            id: 14,
+            donor: 'Mohammed',
+            amount: 450,
+            date: '2026-06-08T11:45:00',
+            method: 'Card',
+            category: 'Fitrana',
+            txId: 'TX-2026-014',
+            status: 'Completed',
+            receipt: 'RCP-014'
+        }, {
+            id: 15,
+            donor: 'Hamad Shaik',
+            amount: 800,
+            date: '2026-06-07T16:10:00',
+            method: 'Online',
+            category: 'General Donation',
+            txId: 'TX-2026-015',
+            status: 'Completed',
+            receipt: 'RCP-015'
+        }];
+
+        const eventsData = [
+            { title: 'Friday Jumu’ah Khutbah', date: '2026-06-23', time: '1:00 PM' },
+            { title: 'Quran Tafsir Class', date: '2026-06-24', time: '7:00 PM' },
+            { title: 'Community Iftar', date: '2026-06-28', time: '6:30 PM' },
+            { title: 'Islamic Lecture Series', date: '2026-07-02', time: '8:00 PM' },
+            { title: 'Youth Halaqa', date: '2026-07-05', time: '5:00 PM' },
+        ];
+
+        const membersData = [
+            'Razak', 'Babji', 'Valli',
+            'Mohammed', 'Subhan', 'Basha',
+            'Maddena valli', 'Madeena', 'Goush',
+            'Ibrahim', 'Bujji', 'Ansar'
+        ];
+
+        const sermonsData = [
+            { title: 'The Importance of Charity', date: '2026-06-16', speaker: 'Shaykh Ahmad Al-Rashid' },
+            { title: 'Patience in Times of Hardship', date: '2026-06-09', speaker: 'Shaykh Yusuf Al-Hassan' },
+            { title: 'Building a Strong Community', date: '2026-06-02', speaker: 'Shaykh Ahmad Al-Rashid' },
+            { title: 'The Path to Forgiveness', date: '2026-05-26', speaker: 'Shaykh Yusuf Al-Hassan' },
+        ];
+
+        // ============================================================
+        //  STATE
+        // ============================================================
+        let currentPage = 'dashboard';
+        let isDark = localStorage.getItem('theme') === 'dark';
+        let isRTL = false;
+        let isNotif = true;
+        let isSidebarCollapsed = false;
+        let isMobileSidebarOpen = false;
+        let paymentsPage = 1;
+        const perPage = 6;
+        let chartInstance = null;
+        let reportChartInstance = null;
+        let qrCodeInstance = null;
+
+        // ============================================================
+        //  INIT
+        // ============================================================
+        document.addEventListener('DOMContentLoaded', () => {
+            if (isDark) {
+                document.documentElement.setAttribute('data-theme', 'dark');
+                document.getElementById('themeToggle').classList.add('active');
+                document.getElementById('settingsThemeToggle').classList.add('active');
+            }
+            initQR();
+            renderDashboard();
+            renderPayments();
+            renderEvents();
+            renderMembers();
+            renderSermons();
+            updatePrayerWidget();
+            updateMosqueQuickView();
+            initCharts();
+            startClock();
+            // Auto-refresh every 60s
+            setInterval(() => { updatePrayerWidget(); }, 60000);
+        });
+
+        // ============================================================
+        //  NAVIGATION
+        // ============================================================
+        function navigateTo(page) {
+            currentPage = page;
+            // Hide all pages
+            document.querySelectorAll('.page-content').forEach(el => el.classList.add('hidden'));
+            const target = document.getElementById('page-' + page);
+            if (target) target.classList.remove('hidden');
+
+            // Update sidebar
+            document.querySelectorAll('.sidebar-nav-item').forEach(el => el.classList.remove('active'));
+            const navItem = document.querySelector(`.sidebar-nav-item[data-page="${page}"]`);
+            if (navItem) navItem.classList.add('active');
+
+            // Update title
+            const titles = {
+                dashboard: ['Dashboard', 'Overview'],
+                payments: ['Donations', 'Payments & QR'],
+                mosque: ['Mosque', 'Details'],
+                prayers: ['Prayer', 'Timings'],
+                events: ['Events', 'Management'],
+                members: ['Members', 'Community'],
+                sermons: ['Sermons', 'Khutbah'],
+                reports: ['Reports', 'Analytics'],
+                settings: ['Settings', 'Configuration']
+            };
+            const t = titles[page] || ['Page', ''];
+            document.getElementById('pageTitle').innerHTML = `${t[0]} <span>·</span> <span id="pageSub">${t[1]}</span>`;
+
+            // Close mobile sidebar
+            closeMobileSidebar();
+
+            // Re-init charts if needed
+            if (page === 'reports') initReportChart();
+            if (page === 'dashboard') initCharts();
+        }
+
+        function toggleSidebar() {
+            isSidebarCollapsed = !isSidebarCollapsed;
+            document.getElementById('sidebar').classList.toggle('collapsed', isSidebarCollapsed);
+        }
+
+        function toggleMobileSidebar() {
+            isMobileSidebarOpen = !isMobileSidebarOpen;
+            document.getElementById('sidebar').classList.toggle('open', isMobileSidebarOpen);
+            document.getElementById('sidebarOverlay').classList.toggle('show', isMobileSidebarOpen);
+        }
+
+        function closeMobileSidebar() {
+            isMobileSidebarOpen = false;
+            document.getElementById('sidebar').classList.remove('open');
+            document.getElementById('sidebarOverlay').classList.remove('show');
+        }
+
+        document.getElementById('sidebarOverlay').addEventListener('click', closeMobileSidebar);
+
+        // ============================================================
+        //  THEME
+        // ============================================================
+        function toggleTheme() {
+            isDark = !isDark;
+            document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+            document.getElementById('themeToggle').classList.toggle('active', isDark);
+            document.getElementById('settingsThemeToggle').classList.toggle('active', isDark);
+        }
+
+        function toggleRTL() {
+            isRTL = !isRTL;
+            document.documentElement.dir = isRTL ? 'rtl' : 'ltr';
+            document.getElementById('rtlToggle').classList.toggle('active', isRTL);
+            showToast(isRTL ? '🔁 RTL mode enabled' : '🔁 LTR mode enabled');
+        }
+
+        function toggleNotif() {
+            isNotif = !isNotif;
+            document.getElementById('notifToggle').classList.toggle('active', isNotif);
+            showToast(isNotif ? '🔔 Notifications enabled' : '🔕 Notifications disabled');
+        }
+
+        // ============================================================
+        //  TOAST
+        // ============================================================
+        function showToast(message) {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.innerHTML = `<span class="toast-icon"><i class="fas fa-info-circle"></i></span> ${message}`;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateY(10px)';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // ============================================================
+        //  DASHBOARD
+        // ============================================================
+        function renderDashboard() {
+            // Stats
+            const total = paymentsData.reduce((s, p) => s + (p.status === 'Completed' ? p.amount : 0), 0);
+            const donors = new Set(paymentsData.filter(p => p.status === 'Completed').map(p => p.donor)).size;
+            document.getElementById('statDonations').textContent = '₹' + total.toLocaleString();
+            document.getElementById('statDonors').textContent = donors;
+            document.getElementById('statEvents').textContent = eventsData.length;
+            document.getElementById('statMembers').textContent = membersData.length;
+
+            // Recent donors
+            const recent = paymentsData.filter(p => p.status === 'Completed').slice(0, 5);
+            const list = document.getElementById('recentDonorsList');
+            list.innerHTML = recent.map(p =>
+                `<div class="flex items-center justify-between p-2 rounded-lg hover:bg-primary-soft transition">
+                    <div><strong>${p.donor}</strong> <span class="text-sm text-gray-400">${p.category}</span></div>
+                    <div class="gold-text font-bold">₹${p.amount}</div>
+                </div>`
+            ).join('');
+
+            // Upcoming events
+            const evList = document.getElementById('upcomingEventsList');
+            evList.innerHTML = eventsData.map(e =>
+                `<div class="flex items-center justify-between p-3 rounded-xl bg-primary-soft border border-gold/10">
+                    <div><strong>${e.title}</strong> <span class="text-sm text-gray-400">${e.date} · ${e.time}</span></div>
+                    <span class="text-xs px-3 py-1 rounded-full bg-gold/10 gold-text font-semibold">Upcoming</span>
+                </div>`
+            ).join('');
+        }
+
+        // ============================================================
+        //  PRAYER WIDGET
+        // ============================================================
+        function updatePrayerWidget() {
+            const now = new Date();
+            const h = now.getHours(),
+                m = now.getMinutes();
+            const times = [
+                { name: 'Fajr', time: prayerData.Fajr, el: 'pFajr' },
+                { name: 'Dhuhr', time: prayerData.Dhuhr, el: 'pDhuhr' },
+                { name: 'Asr', time: prayerData.Asr, el: 'pAsr' },
+                { name: 'Maghrib', time: prayerData.Maghrib, el: 'pMaghrib' },
+                { name: 'Isha', time: prayerData.Isha, el: 'pIsha' }
+            ];
+
+            // Update displayed times
+            times.forEach(t => {
+                document.getElementById(t.el).textContent = t.time;
+            });
+
+            // Find next prayer
+            let next = null;
+            let nextIdx = -1;
+            const totalMinutes = h * 60 + m;
+            for (let i = 0; i < times.length; i++) {
+                const [th, tm] = times[i].time.split(':').map(Number);
+                const tMin = th * 60 + tm;
+                if (tMin > totalMinutes) {
+                    next = times[i];
+                    nextIdx = i;
+                    break;
+                }
+            }
+            if (!next) {
+                next = times[0];
+                nextIdx = 0;
+            }
+
+            // Highlight active
+            document.querySelectorAll('.prayer-grid .p-item').forEach((el, idx) => {
+                el.classList.toggle('active', idx === nextIdx);
+            });
+
+            // Update next prayer info
+            const diff = (() => {
+                const [th, tm] = next.time.split(':').map(Number);
+                const tMin = th * 60 + tm;
+                let diffMin = tMin - totalMinutes;
+                if (diffMin < 0) diffMin += 1440;
+                return diffMin;
+            })();
+            const hrs = Math.floor(diff / 60);
+            const mins = diff % 60;
+            document.getElementById('nextPrayerInfo').textContent =
+                `Next: ${next.name} in ${hrs}h ${mins}m`;
+
+            // Current time
+            document.getElementById('currentPrayerTime').textContent =
+                now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+        }
+
+        function startClock() {
+            updatePrayerWidget();
+            setInterval(updatePrayerWidget, 30000);
+        }
+
+        // ============================================================
+        //  MOSQUE DETAILS
+        // ============================================================
+        function updateMosqueQuickView() {
+            document.getElementById('qvName').textContent = document.getElementById('mName').value;
+            document.getElementById('qvLocation').textContent = document.getElementById('mCity').value;
+            document.getElementById('qvImam').textContent = document.getElementById('mImam').value;
+            document.getElementById('qvPhone').textContent = document.getElementById('mPhone').value;
+        }
+
+        function saveMosqueDetails(e) {
+            e.preventDefault();
+            updateMosqueQuickView();
+            showToast('✅ Mosque details saved successfully!');
+        }
+
+        // ============================================================
+        //  PRAYER TIMINGS (save)
+        // ============================================================
+        function savePrayerTimes(e) {
+            e.preventDefault();
+            const fields = ['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
+            fields.forEach(f => {
+                const val = document.getElementById('p' + f + 'Input').value;
+                prayerData[f] = val;
+                document.getElementById('p' + f).textContent = val;
+            });
+            updatePrayerWidget();
+            showToast('🕌 Prayer timings updated!');
+        }
+
+        // ============================================================
+        //  PAYMENTS (with pagination, search, filter)
+        // ============================================================
+        function getFilteredPayments() {
+            const search = document.getElementById('paySearch').value.toLowerCase();
+            const category = document.getElementById('payCategory').value;
+            const method = document.getElementById('payMethod').value;
+            const dateFrom = document.getElementById('payDateFrom').value;
+            const dateTo = document.getElementById('payDateTo').value;
+
+            return paymentsData.filter(p => {
+                const matchSearch = p.donor.toLowerCase().includes(search);
+                const matchCategory = !category || p.category === category;
+                const matchMethod = !method || p.method === method;
+                let matchDate = true;
+                if (dateFrom) {
+                    const d = new Date(p.date);
+                    const df = new Date(dateFrom);
+                    if (d < df) matchDate = false;
+                }
+                if (dateTo && matchDate) {
+                    const d = new Date(p.date);
+                    const dt = new Date(dateTo);
+                    dt.setHours(23, 59, 59);
+                    if (d > dt) matchDate = false;
+                }
+                return matchSearch && matchCategory && matchMethod && matchDate;
+            });
+        }
+
+        function renderPayments() {
+            const filtered = getFilteredPayments();
+            const totalPages = Math.ceil(filtered.length / perPage) || 1;
+            if (paymentsPage > totalPages) paymentsPage = totalPages;
+            const start = (paymentsPage - 1) * perPage;
+            const pageItems = filtered.slice(start, start + perPage);
+
+            const tbody = document.getElementById('paymentsBody');
+            if (pageItems.length === 0) {
+                tbody.innerHTML =
+                    `<tr><td colspan="9" class="text-center py-8 text-gray-400">No payments found</td></tr>`;
+            } else {
+                tbody.innerHTML = pageItems.map(p => {
+                    const statusClass = p.status.toLowerCase();
+                    const date = new Date(p.date);
+                    const dateStr = date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit',
+                        minute: '2-digit' });
+                    return `<tr>
+                        <td><strong>${p.donor}</strong></td>
+                        <td class="gold-text font-bold">₹${p.amount}</td>
+                        <td>${dateStr}</td>
+                        <td>${p.method}</td>
+                        <td>${p.category}</td>
+                        <td class="text-xs font-mono">${p.txId}</td>
+                        <td><span class="status-badge ${statusClass}">${p.status}</span></td>
+                        <td class="text-xs">${p.receipt}</td>
+                        <td><button class="text-gold hover:underline text-sm" onclick="showToast('🧾 Receipt #${p.receipt} printed')"><i class="fas fa-print"></i></button></td>
+                    </tr>`;
+                }).join('');
+            }
+
+            // Pagination
+            const pag = document.getElementById('paymentsPagination');
+            let html = `<button onclick="paymentsPage=1;renderPayments()" ${paymentsPage===1?'disabled':''}><i class="fas fa-chevron-left"></i></button>`;
+            for (let i = 1; i <= totalPages; i++) {
+                html += `<button class="${i===paymentsPage?'active':''}" onclick="paymentsPage=${i};renderPayments()">${i}</button>`;
+            }
+            html +=
+                `<button onclick="paymentsPage=${totalPages};renderPayments()" ${paymentsPage===totalPages?'disabled':''}><i class="fas fa-chevron-right"></i></button>`;
+            html += `<span class="text-sm text-gray-400 ml-2">${filtered.length} entries</span>`;
+            pag.innerHTML = html;
+        }
+
+        function resetFilters() {
+            document.getElementById('paySearch').value = '';
+            document.getElementById('payCategory').value = '';
+            document.getElementById('payMethod').value = '';
+            document.getElementById('payDateFrom').value = '';
+            document.getElementById('payDateTo').value = '';
+            paymentsPage = 1;
+            renderPayments();
+        }
+
+        // ============================================================
+        //  QR CODE
+        // ============================================================
+        function initQR() {
+            const container = document.getElementById('qrcode');
+            container.innerHTML = '';
+            const upi = 'Taramosque@upi';
+            const payee = 'TARA Mosque Trust';
+            const amount = document.getElementById('qrAmount').value || '';
+            let upiString =
+                `upi://pay?pa=${upi}&pn=${encodeURIComponent(payee)}${amount ? '&am='+amount : ''}&cu=USD`;
+            qrCodeInstance = new QRCode(container, {
+                text: upiString,
+                width: 160,
+                height: 160,
+                colorDark: '#1A5B3A',
+                colorLight: '#ffffff',
+                correctLevel: QRCode.CorrectLevel.H
+            });
+        }
+
+        function updateQRWithAmount() {
+            initQR();
+            showToast('📱 QR code updated with amount');
+        }
+
+        function downloadQR() {
+            const canvas = document.querySelector('#qrcode canvas');
+            if (canvas) {
+                const link = document.createElement('a');
+                link.download = 'Taramosque-qr.png';
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+                showToast('⬇️ QR code downloaded!');
+            } else {
+                showToast('⚠️ Please generate QR first');
+            }
+        }
+
+        // ============================================================
+        //  EXPORT
+        // ============================================================
+        function exportCSV() {
+            const filtered = getFilteredPayments();
+            let csv = 'Donor,Amount,Date,Method,Category,TxID,Status,Receipt\n';
+            filtered.forEach(p => {
+                csv +=
+                    `${p.donor},${p.amount},${p.date},${p.method},${p.category},${p.txId},${p.status},${p.receipt}\n`;
+            });
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'payments_export.csv';
+            link.click();
+            showToast('📥 CSV exported!');
+        }
+
+        function exportPDF() {
+            showToast('📄 PDF export coming soon!');
+        }
+
+        // ============================================================
+        //  EVENTS, MEMBERS, SERMONS
+        // ============================================================
+        function renderEvents() {
+            const list = document.getElementById('eventsList');
+            list.innerHTML = eventsData.map(e =>
+                `<div class="flex items-center justify-between p-3 rounded-xl bg-primary-soft border border-gold/10">
+                    <div><strong>${e.title}</strong> <span class="text-sm text-gray-400">${e.date} · ${e.time}</span></div>
+                    <span class="text-xs px-3 py-1 rounded-full bg-gold/10 gold-text font-semibold">${e.date}</span>
+                </div>`
+            ).join('');
+        }
+
+        function renderMembers() {
+            const list = document.getElementById('membersList');
+            list.innerHTML = membersData.map((m, i) =>
+                `<div class="flex items-center gap-4 p-3 rounded-xl hover:bg-primary-soft transition border border-gold/5">
+                    <div class="w-10 h-10 rounded-full bg-gold/20 flex items-center justify-center text-gold font-bold">${m.charAt(0)}</div>
+                    <div><strong>${m}</strong> <span class="text-sm text-gray-400">· Member #${String(i+1).padStart(3,'0')}</span></div>
+                </div>`
+            ).join('');
+        }
+
+        function renderSermons() {
+            const list = document.getElementById('sermonsList');
+            list.innerHTML = sermonsData.map(s =>
+                `<div class="flex items-center justify-between p-3 rounded-xl bg-primary-soft border border-gold/10">
+                    <div><strong>${s.title}</strong> <span class="text-sm text-gray-400">by ${s.speaker}</span></div>
+                    <span class="text-xs px-3 py-1 rounded-full bg-gold/10 gold-text">${s.date}</span>
+                </div>`
+            ).join('');
+        }
+
+        // ============================================================
+        //  CHARTS
+        // ============================================================
+        function initCharts() {
+            const ctx = document.getElementById('donationChart').getContext('2d');
+            if (chartInstance) chartInstance.destroy();
+            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
+            const data = [3200, 4100, 3800, 5200, 4900, 6100];
+            chartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: months,
+                    datasets: [{
+                        label: 'Donations ($)',
+                        data: data,
+                        backgroundColor: ['rgba(26,91,58,0.7)', 'rgba(212,175,55,0.7)',
+                            'rgba(26,91,58,0.5)', 'rgba(212,175,55,0.5)',
+                            'rgba(26,91,58,0.7)', 'rgba(212,175,55,0.7)'
+                        ],
+                        borderColor: ['#1A5B3A', '#D4AF37', '#1A5B3A', '#D4AF37', '#1A5B3A', '#D4AF37'],
+                        borderWidth: 2,
+                        borderRadius: 8,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                    },
+                    scales: {
+                        y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.05)' } },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
+        }
+
+        function initReportChart() {
+            const ctx = document.getElementById('reportChart').getContext('2d');
+            if (reportChartInstance) reportChartInstance.destroy();
+            reportChartInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Zakat', 'Sadaqah', 'Fitrana', 'Construction Fund'],
+                    datasets: [{
+                        data: [12450, 6230, 3100, 18900],
+                        backgroundColor: ['#1A5B3A', '#D4AF37', '#2E7D52', '#C9A94E'],
+                        borderWidth: 2,
+                        borderColor: '#fff',
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { usePointStyle: true, padding: 20 } }
+                    },
+                    cutout: '65%',
+                }
+            });
+        }
+
+        // ============================================================
+        //  CLOCK / REAL-TIME
+        // ============================================================
+        setInterval(() => {
+            const now = new Date();
+            document.getElementById('currentPrayerTime').textContent =
+                now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+        }, 1000);
+
+        // ============================================================
+        //  KEYBOARD SHORTCUTS
+        // ============================================================
+        document.addEventListener('keydown', (e) => {
+            if (e.ctrlKey && e.key === 'b') { e.preventDefault();
+                toggleSidebar(); }
+            if (e.ctrlKey && e.key === 'd') { e.preventDefault();
+                toggleTheme(); }
+        });
+
+        // ============================================================
+        //  AUTO-REFRESH PAYMENTS (simulate real-time)
+        // ============================================================
+        setInterval(() => {
+            // Simulate a new payment arriving every ~45s
+            const names = ['Yusuf Al-Najdi', 'Mariam Al-Quraishi', 'Sulaiman Al-Tamimi', 'Rana Al-Ali'];
+            const cats = ['Zakat', 'Sadaqah', 'Fitrana', 'General Donation', 'Construction Fund'];
+            const methods = ['Online', 'Card', 'Bank Transfer', 'Cash'];
+            const statuses = ['Completed', 'Completed', 'Pending'];
+            const newPayment = {
+                id: Date.now(),
+                donor: names[Math.floor(Math.random() * names.length)],
+                amount: Math.floor(Math.random() * 800) + 100,
+                date: new Date().toISOString(),
+                method: methods[Math.floor(Math.random() * methods.length)],
+                category: cats[Math.floor(Math.random() * cats.length)],
+                txId: 'TX-' + Date.now().toString().slice(-6),
+                status: statuses[Math.floor(Math.random() * statuses.length)],
+                receipt: 'RCP-' + String(paymentsData.length + 1).padStart(3, '0')
+            };
+            paymentsData.unshift(newPayment);
+            if (currentPage === 'payments') renderPayments();
+            if (currentPage === 'dashboard') renderDashboard();
+            // Show toast only if on payments page
+            if (currentPage === 'payments') {
+                showToast(`💰 New donation: ₹${newPayment.amount} from ${newPayment.donor}`);
+            }
+        }, 45000);
+    </script>
+
+</body>
+</html>
